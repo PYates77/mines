@@ -13,6 +13,10 @@ enum cell_state {
     EXPLODED,
 };
 
+/* 
+ * Labels for curses color pairs
+ * The colors for numbers are mapped so we can index them by integer value and an offset
+ */
 enum cell_schemes {
     COLOR_ONE = 1,
     COLOR_TWO = 2,
@@ -43,9 +47,9 @@ struct cell {
     int neighbors;
 };
 
-static int height = 10;
-static int width = 10;
-static int num_mines = 20;
+static int height = 20;
+static int width = 20;
+static int num_mines = 60;
 static int cursor_x = 0;
 static int cursor_y = 0;
 static bool game_active = true;
@@ -239,6 +243,7 @@ void draw() {
                     } else {
                         symbol = '0' + c->neighbors;
                         if (selected) {
+                            // clever enum usage allows us to do this indexing
                             attron(COLOR_PAIR(c->neighbors + 8));
                         } else {
                             attron(COLOR_PAIR(c->neighbors));
@@ -299,6 +304,7 @@ int main(int argc, char **argv)
 
     // set up curses
     initscr();
+    timeout(-1); //we want getch to block
     start_color();
     use_default_colors();
     noecho();
@@ -338,6 +344,7 @@ int main(int argc, char **argv)
         }
 
         // I'm also gonna allow vim bindings instead of arrow keys because why not
+        // getch is a blocking call because the screen doesn't need to refresh unless input recvd
         int ch = getch();
         switch(ch) {
             case KEY_RIGHT:
@@ -388,7 +395,6 @@ int main(int argc, char **argv)
 
         draw();
         refresh();
-        usleep(6000);
     }
     
     endwin();
