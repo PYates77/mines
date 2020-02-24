@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <argp.h>
 
+#define MINE_GEN_RATIO 6 // num mines = (width*height)/MINE_GEN_RATIO
+
 enum cell_state {
     COVERED,
     UNCOVERED,
@@ -55,6 +57,9 @@ static int cursor_y = 0;
 static bool game_active = true;
 static bool new_game = false; // flag to reset all cells in the middle of a game
 
+// don't calculate an appropriate # of mines based on game size
+static bool custom_num_mines = false; 
+
 static char covered = '#';
 static char flagged = 'F';
 static char exploded = '*';
@@ -63,7 +68,7 @@ struct cell *cells;
 
 
 /* In an effort to make more legit apps, I might as well practice using argp */
-const char *argp_program_version = "Version 1.0\nAuthor: Paul Yates, github.com/pyates77\n";
+const char *argp_program_version = "Version 1.1\nAuthor: Paul Yates, github.com/pyates77\n";
 static char doc[] = "A simple in-terminal minesweeper game\n"
                     "Uncover all the tiles that don't have a mine under them!\n"
                     "Don't uncover a mine or it's game over!\n"
@@ -72,13 +77,16 @@ static char doc[] = "A simple in-terminal minesweeper game\n"
                     "\tArrow keys (or vim directions): move the cursor around\n"
                     "\tSpace or Z: uncover a minesweeper tile\n"
                     "\tF or X: put a flag on a minesweeper tile\n"
-                    "\nN: new game\n"
-                    "\tQ: quit the game\n";
+                    "\tN: new game\n"
+                    "\tQ: quit the game\n"
+                    "\nIf you do not specify number of mines, one sixth "
+                    "of the tiles will contain mines. The first tile you uncover will "
+                    "never be a mine.\n";
 
 static char args_doc[] = "-h height -w width -m mines";
 static struct argp_option options[] = {
-    {"height", 'h', "HEIGHT", 0, "height of the game board in mines"},
-    {"width", 'w', "WIDTH", 0, "width of the game board in mines"},
+    {"height", 'h', "HEIGHT", 0, "height of the game board in tiles"},
+    {"width", 'w', "WIDTH", 0, "width of the game board in tiles"},
     {"mines", 'm', "MINES", 0, "number of mines on the game board"},
 };
 
@@ -181,6 +189,7 @@ void flag(int x, int y)
 void generate_mines(int start_x, int start_y)
 {
     int i=0;
+
     while (i < num_mines) {
         int x = rand()%width;
         int y = rand()%height;
@@ -301,6 +310,10 @@ int main(int argc, char **argv)
     // I'm not a huge fan of dynamic memory allocation, but I might as well practice sometimes
     cells = malloc(height*width*sizeof(struct cell));
     memset(cells, 0, height*width*sizeof(struct cell));
+
+    if (!custom_num_mines) {
+        num_mines = (width*height)/MINE_GEN_RATIO;
+    }
 
     srand(time(NULL));
 
