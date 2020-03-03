@@ -13,7 +13,7 @@ enum cell_state {
     EXPLODED,
 };
 
-/* 
+/*
  * Labels for curses color pairs
  * The colors for numbers are mapped so we can index them by integer value and an offset
  */
@@ -82,31 +82,31 @@ static struct argp_option options[] = {
     {"mines", 'm', "MINES", 0, "number of mines on the game board"},
 };
 
-static error_t parse_opt(int key, char *arg, struct argp_state *state) 
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
     struct arguments *arguments = state->input;
     errno = 0;
     switch (key) {
-        case 'h':
-            if (sscanf(arg, "%i", &height) != 1) {
-                printf("'%s' is not a valid integer height\n", arg);
-                game_active = false;
-            }
-            break;
-        case 'w':
-            if (sscanf(arg, "%i", &width) != 1) {
-                printf("'%s' is not a valid integer width\n", arg);
-                game_active = false;
-            }
-            break;
-        case 'm':
-            if (sscanf(arg, "%i", &num_mines) != 1) {
-                printf("'%s' is not a valid integer number of mines\n", arg);
-                game_active = false;
-            }
-            break;
-        default:
-            return ARGP_ERR_UNKNOWN;
+    case 'h':
+        if (sscanf(arg, "%i", &height) != 1) {
+            printf("'%s' is not a valid integer height\n", arg);
+            game_active = false;
+        }
+        break;
+    case 'w':
+        if (sscanf(arg, "%i", &width) != 1) {
+            printf("'%s' is not a valid integer width\n", arg);
+            game_active = false;
+        }
+        break;
+    case 'm':
+        if (sscanf(arg, "%i", &num_mines) != 1) {
+            printf("'%s' is not a valid integer number of mines\n", arg);
+            game_active = false;
+        }
+        break;
+    default:
+        return ARGP_ERR_UNKNOWN;
     }
 
     return 0;
@@ -114,7 +114,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 
 static struct argp argp = {options, parse_opt, args_doc, doc};
 
-void uncover(int x, int y) 
+void uncover(int x, int y)
 {
     //printf("Uncovering (%d, %d)\r\n", x, y);
     struct cell *c = &cells[y*width+x];
@@ -195,7 +195,7 @@ void generate_mines(int start_x, int start_y)
     }
 }
 
-void calculate_neighbors() 
+void calculate_neighbors()
 {
     for (int y=0; y<height; ++y) {
         for (int x=0; x<width; ++x) {
@@ -216,7 +216,8 @@ void calculate_neighbors()
     }
 }
 
-void draw() {
+void draw()
+{
     bool gameover = false;
     int unflagged_mines = num_mines;
     int uncovers_remaining = height * width - num_mines;
@@ -234,47 +235,48 @@ void draw() {
 
             char symbol = ' ';
             switch (c->state) {
-                case COVERED:
-                    symbol = covered;
-                    break;
-                case UNCOVERED:
-                    if (c->neighbors == 0) {
-                        symbol = ' ';
-                    } else {
-                        symbol = '0' + c->neighbors;
-                        if (selected) {
-                            // clever enum usage allows us to do this indexing
-                            attron(COLOR_PAIR(c->neighbors + 8));
-                        } else {
-                            attron(COLOR_PAIR(c->neighbors));
-                        }
-                    }
-                    --uncovers_remaining;
-                    break;
-                case FLAGGED:
+            case COVERED:
+                symbol = covered;
+                break;
+            case UNCOVERED:
+                if (c->neighbors == 0) {
+                    symbol = ' ';
+                } else {
+                    symbol = '0' + c->neighbors;
                     if (selected) {
-                        attron(COLOR_PAIR(COLOR_FLAGGED_SELECTED));
+                        // clever enum usage allows us to do this indexing
+                        attron(COLOR_PAIR(c->neighbors + 8));
                     } else {
-                        attron(COLOR_PAIR(COLOR_FLAGGED));
+                        attron(COLOR_PAIR(c->neighbors));
                     }
-                    symbol = flagged;
-                    --unflagged_mines;
-                    break;
-                case EXPLODED:
-                    attron(COLOR_PAIR(COLOR_EXPLODED));
-                    symbol = exploded;
-                    gameover = true;
-                    break;
+                }
+                --uncovers_remaining;
+                break;
+            case FLAGGED:
+                if (selected) {
+                    attron(COLOR_PAIR(COLOR_FLAGGED_SELECTED));
+                } else {
+                    attron(COLOR_PAIR(COLOR_FLAGGED));
+                }
+                symbol = flagged;
+                --unflagged_mines;
+                break;
+            case EXPLODED:
+                attron(COLOR_PAIR(COLOR_EXPLODED));
+                symbol = exploded;
+                gameover = true;
+                break;
             }
 
             mvaddch(y, 2*x+1, symbol);
-
             attron(COLOR_PAIR(COLOR_UNSELECTED));
+            mvaddch(y, 2*x, ' '); // looks nicer if we color in the spaces between squares
+
             // clear the status line of previous text
             move(height+1, 0);
             clrtoeol();
             if (gameover) {
-                // loss condition    
+                // loss condition
                 mvaddstr(height+1, 0, "Game Over");
             } else {
                 if (uncovers_remaining == 0) {
@@ -291,7 +293,7 @@ void draw() {
     }
 };
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     struct arguments *arguments;
 
@@ -347,56 +349,56 @@ int main(int argc, char **argv)
         // getch is a blocking call because the screen doesn't need to refresh unless input recvd
         int ch = getch();
         switch(ch) {
-            case KEY_RIGHT:
-            case 'l':
-                if (cursor_x < width-1) {
-                    ++cursor_x;
-                }
-                break;
-            case KEY_LEFT:
-            case 'h':
-                if (cursor_x > 0) {
-                    --cursor_x;
-                }
-                break;
-            case KEY_UP:
-            case 'k':
-                if (cursor_y > 0) {
-                    --cursor_y;
-                }
-                break;
-            case KEY_DOWN:
-            case 'j':
-                if (cursor_y < height-1) {
-                    ++cursor_y;
-                }
-                break;
-            case ' ':
-            case 'z':
-                if (!generated) {
-                    generate_mines(cursor_x, cursor_y);
-                    calculate_neighbors();
-                    generated = true;
-                }
+        case KEY_RIGHT:
+        case 'l':
+            if (cursor_x < width-1) {
+                ++cursor_x;
+            }
+            break;
+        case KEY_LEFT:
+        case 'h':
+            if (cursor_x > 0) {
+                --cursor_x;
+            }
+            break;
+        case KEY_UP:
+        case 'k':
+            if (cursor_y > 0) {
+                --cursor_y;
+            }
+            break;
+        case KEY_DOWN:
+        case 'j':
+            if (cursor_y < height-1) {
+                ++cursor_y;
+            }
+            break;
+        case ' ':
+        case 'z':
+            if (!generated) {
+                generate_mines(cursor_x, cursor_y);
+                calculate_neighbors();
+                generated = true;
+            }
 
-                uncover(cursor_x, cursor_y);
-                break;
-            case 'x':
-            case 'f':
-                flag(cursor_x, cursor_y);
-                break;
-            case 'n':
-                new_game = true;
-                break;
-            case 'q':
-                game_active = false;
-                break;
+            uncover(cursor_x, cursor_y);
+            break;
+        case 'x':
+        case 'f':
+            flag(cursor_x, cursor_y);
+            break;
+        case 'n':
+            new_game = true;
+            break;
+        case 'q':
+            game_active = false;
+            break;
         }
 
         draw();
         refresh();
     }
-    
+
     endwin();
     free(cells);
     return 0;
