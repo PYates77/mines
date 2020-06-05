@@ -92,7 +92,6 @@ static struct argp_option options[] = {
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
-    struct arguments *arguments = state->input;
     errno = 0;
     switch (key) {
     case 'h':
@@ -304,9 +303,7 @@ void draw()
 
 int main(int argc, char **argv)
 {
-    struct arguments *arguments;
-
-    argp_parse(&argp, argc, argv, 0, 0, &arguments);
+    argp_parse(&argp, argc, argv, 0, 0, NULL);
     // I'm not a huge fan of dynamic memory allocation, but I might as well practice sometimes
     cells = malloc(height*width*sizeof(struct cell));
     memset(cells, 0, height*width*sizeof(struct cell));
